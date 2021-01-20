@@ -38,18 +38,15 @@
                         </p>
                         </center>
                     <%}%>
-                    <div class="errors-feedback row">
-                        
-                    </div>
-                    <form action="/users/login" class="row container user-login-form m-0" method="POST">
+                    <form action="/users/login" class="row container" method="POST">
 
                         <div class="col-md-12">
-                            <input type="email" class="col form-control email" name="email" id="email" placeholder="Tu correo">
+                            <input required type="email" class="col form-control" name="email" id="email" placeholder="Tu correo">
                             <br />
-                            <input type="password" class="col form-control password" name="password" id="password" placeholder="Tu contraseña">
+                            <input required type="password" class="col form-control" name="password" id="password" placeholder="Tu contraseña">
                             
                             <center>
-                                <input type="checkbox" name="remember" id="remember"> Recordame
+                                <input type="checkbox" name="newsletter" id="newsletter"> Recordame
                             </center>
                             <br/>
 
