@@ -3,39 +3,47 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-const methodOverride = require('method-override');
 const session=require('express-session');
+const methodOverride = require('method-override');
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-var productsRouter = require('./routes/products');
-const apiProductsRouter = require('./routes/api/products');
-const apiUsersRouter = require('./routes/api/users');
+
 
 var app = express();
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.urlencoded({ extended: false }));
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(methodOverride('_method'));
 app.use(session({
-  secret:'secretNuevo',
+  secret:'secret',
   resave:true,
   saveUninitialized:true
 }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(methodOverride('_method'));
+
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
+
+var indexRouter = require('./routes/index');
+var usersRouter = require('./routes/users');
+const productsRouter = require('./routes/products');
+
+/* API Handlers */
+
+const apiProductsRouter = require('./routes/api/products');
+const apiUsersRouter = require('./routes/api/users');
 
 app.use('/', indexRouter);
+app.use('/products', productsRouter);
 app.use('/users', usersRouter);
-app.use('/products',productsRouter);
-app.use('/v1/products',apiProductsRouter);
-app.use('/v1/users',apiUsersRouter);
 
+/* API END POINTS */
+
+app.use('/api/products',apiProductsRouter);
+app.use('/api/users',apiUsersRouter); 
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
