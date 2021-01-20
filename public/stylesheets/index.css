@@ -33,13 +33,14 @@ button:focus{
 }
 /*estilos de la barra superior donde se encuentra el logo, el icono de carrito y de usuario*/
 header #menu{
-  background-color: rgba(0, 188, 212,0.96);
-  top:13px;
+  background-color: transparent;
+  border-radius: 14px;
+  top:18px;
 }
 /*Background dinamico de la barra superior con JQuery*/
 .bg-primary{
   transition: all 0.8s ease;
-  background-color: transparent !important;
+  background-color: rgba(0, 188, 212,0.96) !important;
   position:fixed;
   top:0px !important;
 }
@@ -70,7 +71,7 @@ header .form-control::placeholder {
   color:white;
 }
 header #menu .logo img{
-    width: 40%;
+    width: 55%;
 }
 header #menu .logo{
   text-align: center;
@@ -104,14 +105,6 @@ header #menu .icono-shop-user #cart-shop span{
 header #menu .line-menu{
   background-color: transparent;
   color:white;
-}
-
-header .welcome-user{
-    font-size: 0.6rem;
-    position: absolute;
-    right: 17%;
-    color:white;
-    font-weight: bold;
 }
 /*estilos correspondientes al navbar que se usa con un modal emergente*/
 header .modal.fade .modal-dialog{
@@ -383,18 +376,18 @@ main .second-row-photo .promo-photo{
   cursor:context-menu;
 }
 .container-store .sidebar{
+  height: 100vh;
   padding-top:2rem;
   position: sticky;
   top:60px;
   float:left;
-  overflow: hidden;
 }
 .container-store .sidebar ul{
   list-style:none;
   font-size:1.3rem;
   font-weight: 600;
   color:#666;
-  line-height: 3rem;
+  line-height: 4rem;
 }
 .container-store .sidebar ul a{
   color:black;
@@ -519,7 +512,7 @@ main .second-row-photo .promo-photo{
   }
   header #menu .logo img{
     transition: all 1s ease;
-    width: 25%;
+    width: 30%;
   }
   header #menu .icono-shop-user #cart-shop{
     top: 6px;
@@ -528,13 +521,6 @@ main .second-row-photo .promo-photo{
   header #menu .icono-shop-user #cart-shop span{
   top:-0.5px;
   right: 4px;
-  }
-  header .welcome-user{
-    font-size: 1.1rem;
-    position: absolute;
-    right: 11%;
-    color: white;
-    font-weight: bold;
   }
   header .modal .modal-dialog{
     max-width:40vw;
@@ -596,23 +582,16 @@ main .second-row-photo .promo-photo{
   }
   header #menu .logo img{
     transition: all 1s ease;
-    width: 23%;
+    width: 30%;
   }
   header #menu .icono-shop-user #cart-shop{
     top: 10px;
     right: 37px;
   }
   header #menu .icono-shop-user #cart-shop span{
-    top:1px;
-    right: 5px;
-  }
-  header .welcome-user{
-    font-size: 1.5rem;
-    position: absolute;
-    right: 135px;
-    color: white;
-    font-weight: bold;
-  }
+  top:1px;
+  right: 5px;
+  } 
   header #menu .input-button-navbar{
     display:flex;
   }
@@ -642,7 +621,7 @@ main .second-row-photo .promo-photo{
     font-size:1.5rem;
   }
   .container-store .container-photos .product-box img{
-    height: 30vw;
+    height: 35vw;
   }
   .container-store .page-content .card-store:nth-child(4n+3){
     padding-left:0;
