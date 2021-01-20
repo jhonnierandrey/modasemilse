@@ -1,90 +1,107 @@
-const jwt = require('jsonwebtoken');
-const {Op}= require('sequelize');
-const bcrypt = require('bcrypt');
-let db = require('../../database/models');
+const fs = require('fs');
+const path = require('path');
+let bcrypt = require('bcrypt');
+var {check, validationResult, body} = require('express-validator');
 
-const controller = {
-    login: async (req,res) =>{
-        let userLogin = await db.User.findOne({ where: {email: req.body.email }});
-        
-        if(userLogin !=undefined){
-            if(userLogin.rol_id == 1){
-                if(req.body.password == userLogin.password){
-                    const payload = {
-                        email: req.body.email
-                    };
-                    return jwt.sign(payload, "secret", {
-                        expiresIn: 3600
-                    }, 
-                    (err, token) => {
-                        if (err) {
-                            return res.json({
-                                mensaje: err
-                            })
-                        }
-                        res.status(200).json({
-                            token: token,
-                        });
-                    });
+const usersFilePath = path.join(__dirname, '../../data/users.json');
+const users = JSON.parse(fs.readFileSync(usersFilePath, 'utf-8'));
+
+let usersController = {
+    register : function(req, res) {
+        res.render('register', { title: 'Modas Emilse | Registro',session:req.session.userLoginSession});
+    },
+    login : function(req, res){
+        console.log(req.cookies.user);
+        console.log(req.session.userLoginSession);
+        res.render('login', { title: 'Modas Emilse | Login',session:req.session.userLoginSession});
+    },
+    userValidator : function(req, res){
+        const errors=validationResult(req);
+        if(errors.isEmpty()){
+            let userLogin=users.find(user => {
+                return user.email==req.body.email;
+            })
+            if(userLogin !=undefined){
+                if(bcrypt.compareSync(req.body.password,userLogin.password)){
+                    req.session.userLoginSession=userLogin;
+                    if(req.body.newsletter){
+                        res.cookie('user',userLogin.id,{maxAge:60000});
+                    }
+                    res.redirect('/users/account');
                 }
                 else{
-                    res.json('Usuario o contraseña incorrecta');
+                    res.render('login',{
+                        title:'Modas Emilse | Login',
+                        error:'Usuario o contraseña incorrecta'
+                    });
                 }
+            }else{
+                res.render('login',{
+                    title:'Modas Emilse | Login',
+                    error:'Usuario o contraseña incorrecta'
+                });
             }
-            else{
-                res.json("No tiene autorizacion para ingresar");
+        }else{
+            res.render('login',{
+                title:'Modas Emilse | Login',
+                errors:errors.errors
+            });
+        }
+    },
+    create : function (req, res){
+        const errors=validationResult(req);
+        if(errors.isEmpty()){
+            let nuevaId = users.length + 1;
+            let nuevoUsuario = {
+                id: nuevaId,
+                avatar : req.files[0].filename,
+                nombre : req.body.firstName,
+                apellido : req.body.lastName,
+                email: req.body.email,
+                password: bcrypt.hashSync(req.body.password, 10),
+                nacimiento: req.body.nacimiento,
+                sexo: req.body.sexo,
+                newsletter: req.body.newsletter
             }
+
+            const nuevosUsuarios = [...users, nuevoUsuario];
+            fs.writeFileSync(usersFilePath, JSON.stringify(nuevosUsuarios, null, ' '));
             
-        }
-        else{
-            res.json('Usuario o contraseña incorrecta');
+            res.redirect('/users/login');
+        }else{
+            return res.render('register',{
+                errors:errors.errors,
+                title:'Modas Emilse | Login'
+            })
         }
     },
-    list: async (req,res) => {
-        let data = [];
-        const rol = await db.Rol.findOne({where:{name_rol:{[Op.or]:["USER","usuario"]}}});
-        const users = await db.User.findAll({
-            where: {
-                rol_id:rol.id
-            }
+    account : function(req, res){
+        console.log(req.cookies.user);
+        console.log(req.session.userLoginSession);
+        res.render('userPanel', {
+            title: 'Modas Emilse | Mi cuenta',
+            nombre:req.session.userLoginSession.nombre,
+            apellido:req.session.userLoginSession.apellido,
+            email:req.session.userLoginSession.email,
+            session:req.session.userLoginSession
         });
-        for (let i=0; i<users.length; i++){
-            data[i] = {
-                id : users[i].id,
-                name : users[i].nombre,
-                email : users[i].email,
-                detail : "https://modasemilse.herokuapp.com/v1/users/" + users[i].id
-            }
-        }
-        
-
-        const respuesta = {
-            meta:{
-                status:200,
-                total: users.length,
-            },
-            data:data,
-        }
-
-        res.json(respuesta);
     },
-    find: async (req,res) => {
-        const user = await db.User.findByPk(req.params.id);
-        if(user.rol_id == 1){
-            res.json("No existe ese usuario");
-        }
-
-        let respuesta = {
-            id : user.id,
-            nombre : user.nombre,
-            apellido : user.apellido,
-            email : user.email,
-            nacimiento : user.nacimiento,
-            sexo : user.sexo,
-        }
-
-        res.json(respuesta);
+    orders : function(req, res){
+        res.render('userOrders', { 
+            title: 'Modas Emilse | Mis pedidos',
+            nombre:req.session.userLoginSession.nombre,
+            apellido:req.session.userLoginSession.apellido,
+            session:req.session.userLoginSession
+        });
+    },
+    favorites:function(req, res){
+        res.render('userFavorites', { title: 'Modas Emilse | Favoritos',session:req.session.userLoginSession});
+    },
+    logout:function(req, res) {
+        req.session.destroy();
+        res.cookie('color',null,{maxAge:-1});
+        res.redirect('/users/login');
     }
 }
 
-module.exports = controller;
+module.exports = usersController;

@@ -1,5 +1,8 @@
-const db = require('../database/models');
-const {Op} = require('sequelize');
+const fs=require('fs');
+const path=require('path');
+
+const productsFilePath = path.join(__dirname,'../data/productsDataBase.json');
+const products = JSON.parse(fs.readFileSync(productsFilePath,'utf-8'));
 
 function removeDuplicates(originalArray, nameProperty) {
     var newArray = [];
@@ -10,7 +13,7 @@ function removeDuplicates(originalArray, nameProperty) {
     for(var object in objectProcess) {
         newArray.push(objectProcess[object]);
     }
-    return newArray;
+     return newArray;
 }
 
 const controller = {
@@ -18,34 +21,25 @@ const controller = {
         res.render('index', { title: 'Modas Emilse | Inicio',session:req.session.userLoginSession});
     },
     
-    search:async (req,res)=>{
-        const categorias = await db.Category.findAll();
-        db.Product.findAll({
-            include:[{
-                association:'category',
-                where:{ 
-                    type_cloth:{
-                        [Op.like]:'%'+req.query.keywords+'%'
-                    }
+    search:(req,res)=>{
+        const keywords = req.query.keywords.toLowerCase();
+        const arrayKeywords= keywords.split(' ');
+        const findKeywords = [];
+        for(var i=0; i<products.length ; i++)
+        {
+            for(var j=0; j<arrayKeywords.length; j++){
+                if(products[i].type.toLowerCase() == arrayKeywords[j]){
+                    findKeywords.push(products[i]);
+                    j=arrayKeywords.length;
                 }
-            }]
-        })
-        .then(function(products){
-                res.render('tienda',{
-                    title:'Tienda - Emilse',
-                    titleContent: 'Resultados de busqueda',
-                    categorias:categorias,
-                    products:removeDuplicates(products,'code_article'),
-                    session:req.session.userLoginSession
-            })
-        })
-    },
-    cartView : (req, res) => {
-        res.render('carrito', { title: 'Modas Emilse | Carrito',session:req.session.userLoginSession});
-    },
-
-    support : (req, res) =>{
-        res.render('support', { title: 'Modas Emilse | Atención al cliente',session:req.session.userLoginSession});
+            }
+        }
+        res.render('tienda',{
+            title:'Tienda - Emilse',
+            titleContent: 'Resultados de busqueda',
+            products:removeDuplicates(findKeywords,'idArticle'),
+            session:req.session.userLoginSession
+        });
     }
 }
 

@@ -1,187 +1,153 @@
-const db = require('../../database/models');
-const {Op} = require('sequelize');
+const fs = require('fs');
+const path = require('path');
+const {check,validationResult,body}=require('express-validator');
+const productsFilePath = path.join(__dirname,'../../data/productsDataBase.json');
+const products = JSON.parse(fs.readFileSync(productsFilePath,'utf-8'));
+
+function removeDuplicates(originalArray, nameProperty) {
+    var newArray = [];
+    var objectProcess  = {};
+    for(var i=0; i<originalArray.length ; i++){
+        objectProcess[originalArray[i][nameProperty]] = originalArray[i];
+    }
+    for(var object in objectProcess) {
+        newArray.push(objectProcess[object]);
+    }
+     return newArray;
+}
+
+//function productDetails(originalArray, productId){}
 
 const controller = {
-    list: async (req,res) => {
-        const products = await db.Product.findAll();
-        const categorys = await db.Category.findAll();
-        let categoryAcc = {}
-        let acc;
-        let data = [];
-        for( let i=0; i<products.length;i++){
-            data[i] = {
-                id : products[i].id,
-                name : products[i].title,
-                description : products[i].description_product,
-                endpoints : "https://modasemilse.herokuapp.com/v1/products/"+products[i].id,
-            };
-        }
-        for(let i=0; i<categorys.length; i++){
-            acc = 0;
-            for(let j=0; j<products.length;j++){
-                if(products[j].category_id == categorys[i].id){
-                    acc++;
-                }
-            }
-            let nombre = categorys[i].type_cloth;
-            categoryAcc[nombre] = acc;
-        }
-
-        const respuesta = {
-            meta:{
-                status:200,
-                total: products.length,
-                categorys:categoryAcc,
-            },
-            data:data,
-        }
-        res.json(respuesta);
+    root:(req,res) => {
+        /*const newPrueba = {a:1,b:5124,c:5,d:613};
+        for(i in newPrueba){
+            console.log(newPrueba[i]);
+        }*/
+        var productsWithoutRepeat = removeDuplicates(products,'idArticle');
+        res.render('tienda', { 
+            title: 'Tienda - Emilse',
+            titleContent:'Todos los productos',
+            products:productsWithoutRepeat,
+            session:req.session.userLoginSession
+        });
+    },
+    
+    filter:(req,res) => {
+        const productsFilter = products.filter(product => req.params.type.includes(product.type.toLowerCase()));
+        res.render('tienda',{
+            title: 'Tienda - Emilse',
+            titleContent: req.params.type[0].toUpperCase()+req.params.type.slice(1),
+            products:removeDuplicates(productsFilter,'idArticle'),
+            session:req.session.userLoginSession
+        });
     },
 
-    find : async function(req, res) {
-        const product = await db.Product.findByPk(req.params.id);
-        const productsForArticle = await db.Product.findAll({where:{code_article:product.code_article}});
-        const sizesForArticle = await db.Product_Size.findAll({where:{code:product.code_article}});
-        const sizes = await db.Size.findAll();
-        const category = await db.Category.findByPk(product.id);
-        let colours = [];
-        let sizesArray = [];
-        let cantidad = 0;
 
-        for(productForArticle of productsForArticle){
-            colours.push(productForArticle.colour);
-        }
-
-        for( let i = 0; i < sizesForArticle.length; i++) {
-            for(let j=0; j < sizes.length; j++){
-                if(sizesForArticle[i].size_id == sizes[j].id) {
-                    sizesArray.push(sizes[j].size);
-                    cantidad += sizesForArticle[i].units;
-                }
-            }
-        }
-
-        const respuesta = {
-            code_article : product.code_article,
-            title : product.title,
-            description_product : product.description_product,
-            price : product.price,
-            category : category.type_cloth,
-            colour : colours,
-            sizes : sizesArray,
-            stockTotal: cantidad
-        }
-        res.json(respuesta);
+    create:(req,res) => {
+        res.render('productAdd',{
+            title:'Carga de Producto',
+            session:req.session.userLoginSession
+        });
     },
 
-    store: async function(req, res) {
-        if(parseInt(req.body.type_cloth,10)== NaN){
-            await db.Category.create({
-                type_cloth:req.body.type_cloth
-            });
-            const newCategory = await db.Category.findOne({where:{type_cloth:req.body.type_cloth}});
-            req.body.type_cloth = newCategory.id;
-        }
-        await db.Product.create({
-            code_article: req.body.code_article,
-            title: req.body.title,
-            description_product: req.body.description_product,
-            image: req.files[0].filename,
-            image2: req.files[1].filename,
-            image3: req.files[2].filename,
+    store:(req,res,next) => {
+        const newId = products[products.length-1].id + 1;
+        
+        const newProduct = {
+            id:newId,
+            idArticle: req.body.idArticle,
             gender: req.body.gender,
-            date_up: req.body.date_up,
-            price: req.body.price,
-            price_discount: req.body.price_discount,
+            title:req.body.title,
+            description:req.body.description,
+            type:req.body.type,
+            image:[
+                req.files[0].filename,
+                req.files[1].filename,
+                req.files[2].filename,
+            ],
+            talle:req.body.talle,
             colour: req.body.colour,
-            category_id:req.body.type_cloth,
-            products_sizes:[{
-                size_id:req.body.size_id,
-                units:req.body.units,
-            }]
-        },{
-            include:[{
-                association:'products_sizes'
-            }]
+            print: req.body.print,
+            unit: req.body.unit,
+            price: req.body.price,
+            priceDiscount: req.body.priceDiscount,
+            fecha: req.body.fecha
+        };
+
+        const finalProduct = [...products,newProduct];
+        fs.writeFileSync(productsFilePath,JSON.stringify(finalProduct, null, ' '));
+        return res.redirect('/products');
+        
+    },
+
+    edit:(req,res) => {
+        let idEdit = req.params.productId;
+		let productEdit;
+		products.forEach(product => {
+			if(idEdit == product.id){
+				productEdit=product;
+			}
         });
-  
-        res.json({
-          status: 200,
+		res.render('productEdit', {
+            title:'Editando - Modas Emilse',
+			productEdit:productEdit,
+            idEdit:idEdit,
+            session:req.session.userLoginSession
         });
     },
-    orders : async (req,res)=>{
-        let totalFinal = 0;
-        let date = new Date();
-        date = date.getFullYear() + "-" + (date.getMonth() +1) + "-" + date.getDate();
-        console.log(req.body);
-        for(product of req.body){
-            totalFinal += parseInt(product.total,10);
-        }
-        await db.Order.create({
-            total:totalFinal,
-            estado:'pendiente',
-            date: date,
-            user_id:req.session.userLoginSession.id
+
+    update: (req,res) => {
+        let idEdit = req.params.productId;
+		const newProducts = products.map(product =>{
+			if(product.id == idEdit)
+			{
+                product.idArticle = req.body.idArticle;
+                product.gender = req.body.gender;
+                product.title = req.body.title;
+                product.description = req.body.description;
+                product.type = req.body.type;
+                product.talle = req.body.talle;
+                product.colour = req.body.colour;
+                product.print = req.body.print;
+                product.units = req.body.units;
+                product.price = req.body.price;
+                product.priceDiscount = req.body.priceDiscount;
+                product.date = req.body.date;
+			}
+			return product;
         });
-
-        const order = await db.Order.findOne({where:{total:totalFinal}});
-
-        for(product of (req.body)){
-            await db.Order_Product.create({
-                products_id: parseInt(product.product_id,10),
-                orders_id: order.id,
-                units: parseInt(product.quantity,10),
-            })
-        }
-
-        res.json({
-            status:200
-        });
+		fs.writeFileSync(productsFilePath,JSON.stringify(newProducts,null, ' '));
+		res.redirect('/products');
     },
-    confirm:async(req,res) =>{
-        const order_products = await db.Order_Product.findAll({where:{orders_id:req.body.order_id}});
-        for(product of order_products){
-            let units = await db.Product_Size.findOne({where:{product_id:product.products_id}});
-            let unitTotal = units.units - product.units;
-            await db.Product_Size.update({
-                units: unitTotal
-            },{
-                where:{product_id:product.products_id}
-            });
-        }
-        await db.Order.update({
-            estado: "Finalizado"
-        },{
-            where:{id:req.body.order_id}
-        });
 
-        res.json({
-            status:200
+    destroy:(req,res) => {
+        const idDelete = req.params.productId;
+		let newID=1;
+		const newProducts=products.filter(product =>{
+			if(product.id != idDelete){
+				product.id=newID;
+				newID+=1;
+				return product;
+			}
         });
-    },
-    favoriteAdd:async(req,res)=>{
-        console.log(req.session.userLoginSession);
-        console.log(req.body);
-        await db.Favorite.create({
-            users_id: req.session.userLoginSession.id,
-            products_id: req.body.product_id,
-        });
+        
+		fs.writeFileSync(productsFilePath,JSON.stringify(newProducts,null, ' '));
 
-        res.json({
-            status:200
-        })
+		res.redirect('/');
     },
-    favoriteRemove:async(req,res)=>{
-        await db.Favorite.destroy({
-            where:{
-                [Op.and]: [{users_id: req.session.userLoginSession.id}, {products_id: req.body.product_id}]
+
+    detail:(req,res) => {
+        const idProduct = req.params.productId;
+        const product = products.filter(product => {
+            if(product.id == idProduct){
+                productDetails = product;
             }
-        })
+        });
+        res.render('detalleProducto',  {productDetails:productDetails,session:req.session.userLoginSession}
+        );
+    },
 
-        res.json({
-            status:200
-        })
-    }
 }
 
 module.exports = controller;
