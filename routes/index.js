@@ -8,5 +8,6 @@ const guestUserLogin = require('../middleware/guestUserLogin');
 router.get('/', indexController.root);
 
 /*GET search page*/
-router.get('/search',indexController.search);
+// router.get('/search',indexController.search);
+
 module.exports = router;

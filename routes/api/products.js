@@ -3,9 +3,6 @@ const router = express.Router();
 const path = require('path');
 const multer = require('multer');
 
-const productsAPIController = require('../../controllers/api/productsController');
-// const authenticationMiddleware = require('../../middleware/api/authentication');
-
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
       cb(null, 'public/images/products')
@@ -15,13 +12,27 @@ var storage = multer.diskStorage({
     }
   })
    
-var upload = multer({ storage: storage });
+  var upload = multer({ storage: storage })
 
-router.get('/', productsAPIController.root);
-// router.post('/add/favorite',productsAPIController.favoriteAdd);
-// router.post('/delete/favorite',productsAPIController.favoriteRemove);
-// router.post('/shop',productsAPIController.orders);
-// router.post('/shop/confirm',productsAPIController.confirm);
-// router.get('/:id', productsAPIController.find);
+const productsController = require('../../controllers/api/productsController');
+
+/* GET products page. */
+router.get('/', productsController.root);
+
+router.get('/type/:type',productsController.filter);
+
+/*GET products create page */
+router.get('/create',productsController.create);
+router.post('/create',upload.any(),productsController.store);
+
+/*GET products edit page*/
+router.get('/edit/:productId', productsController.edit); /* GET - Form to create */
+router.put('/edit/:productId', productsController.update); /* PUT - Update in DB */
+
+/*GET products delete page*/
+router.delete('/delete/:productId', productsController.destroy); /* DELETE - Delete from DB */
+
+/*GET details product by id*/
+router.get('/details/:productId', productsController.detail); /* GET - Show details product by Id*/
 
 module.exports = router;
