@@ -54,7 +54,7 @@ let usersController = {
             let nuevaId = users.length + 1;
             let nuevoUsuario = {
                 id: nuevaId,
-                avatar : req.files[0].filename,
+                // avatar : req.files[0].filename,
                 nombre : req.body.firstName,
                 apellido : req.body.lastName,
                 email: req.body.email,

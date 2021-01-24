@@ -18,29 +18,36 @@ function removeDuplicates(originalArray, nameProperty) {
 
 const controller = {
     root:(req,res)=>{
-        res.render('index', { title: 'Modas Emilse | Inicio',session:req.session.userLoginSession});
+        // res.render('index', { title: 'Modas Emilse | Inicio',session:req.session.userLoginSession});
+        // standard json response :
+        res.json({
+                "meta" : {
+                    "status" : 200,
+                    "msg" : "API is running"
+                }
+            })
     },
     
-    search:(req,res)=>{
-        const keywords = req.query.keywords.toLowerCase();
-        const arrayKeywords= keywords.split(' ');
-        const findKeywords = [];
-        for(var i=0; i<products.length ; i++)
-        {
-            for(var j=0; j<arrayKeywords.length; j++){
-                if(products[i].type.toLowerCase() == arrayKeywords[j]){
-                    findKeywords.push(products[i]);
-                    j=arrayKeywords.length;
-                }
-            }
-        }
-        res.render('tienda',{
-            title:'Tienda - Emilse',
-            titleContent: 'Resultados de busqueda',
-            products:removeDuplicates(findKeywords,'idArticle'),
-            session:req.session.userLoginSession
-        });
-    }
+    // search:(req,res)=>{
+    //     const keywords = req.query.keywords.toLowerCase();
+    //     const arrayKeywords= keywords.split(' ');
+    //     const findKeywords = [];
+    //     for(var i=0; i<products.length ; i++)
+    //     {
+    //         for(var j=0; j<arrayKeywords.length; j++){
+    //             if(products[i].type.toLowerCase() == arrayKeywords[j]){
+    //                 findKeywords.push(products[i]);
+    //                 j=arrayKeywords.length;
+    //             }
+    //         }
+    //     }
+    //     res.render('tienda',{
+    //         title:'Tienda - Emilse',
+    //         titleContent: 'Resultados de busqueda',
+    //         products:removeDuplicates(findKeywords,'idArticle'),
+    //         session:req.session.userLoginSession
+    //     });
+    // }
 }
 
 module.exports = controller;
