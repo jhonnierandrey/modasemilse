@@ -28,8 +28,8 @@ app.set('view engine', 'ejs');
 
 
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-const productsRouter = require('./routes/products');
+// var usersRouter = require('./routes/users');
+// const productsRouter = require('./routes/products');
 
 /* API Handlers */
 
@@ -37,8 +37,8 @@ const apiProductsRouter = require('./routes/api/products');
 const apiUsersRouter = require('./routes/api/users');
 
 app.use('/', indexRouter);
-app.use('/products', productsRouter);
-app.use('/users', usersRouter);
+// app.use('/products', productsRouter);
+// app.use('/users', usersRouter);
 
 /* API END POINTS */
 
@@ -58,7 +58,13 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error', { title : "Upsss! Tenemos un problema"});
+  // res.render('error', { title : "Upsss! Tenemos un problema"});
+  res.json({
+    "meta" : {
+      "status" : err.status,
+      "msg" : "Not Found"
+    }
+  })
 });
 
 module.exports = app;
